@@ -3,12 +3,10 @@ import { Clock } from "./Clock";
 import { CampusPlayer } from "./CampusPlayer";
 import { CampusTitle } from "./CampusTitle";
 import { InstagramHandle } from "./InstagramHandle";
-import { SharePill } from "./SharePill";
+import { ShareButton } from "./ShareButton";
 
 const playerDockClass =
   "fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-20 -translate-x-1/2 sm:left-6 sm:translate-x-0";
-const shareDockClass =
-  "fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 z-20 sm:right-6";
 
 export function JnuCampus() {
   return (
@@ -29,7 +27,8 @@ export function JnuCampus() {
           <CampusTitle />
         </div>
 
-        <div className="shrink-0">
+        <div className="flex shrink-0 items-center gap-2">
+          <ShareButton />
           <InstagramHandle />
         </div>
       </header>
@@ -40,10 +39,6 @@ export function JnuCampus() {
 
       <div className={playerDockClass}>
         <CampusPlayer />
-      </div>
-
-      <div className={shareDockClass}>
-        <SharePill />
       </div>
     </main>
   );

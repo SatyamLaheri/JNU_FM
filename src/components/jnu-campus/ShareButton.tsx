@@ -1,11 +1,21 @@
 import { Check, Share2 } from "lucide-react";
 import { useCallback, useState } from "react";
 
-export function SharePill() {
+export function ShareButton() {
   const [copied, setCopied] = useState(false);
 
   const handleShare = useCallback(async () => {
     const url = window.location.href;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ url, title: "JNU Campus Radio" });
+        return;
+      } catch {
+        // fall through to copy
+      }
+    }
+
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -29,18 +39,12 @@ export function SharePill() {
       type="button"
       onClick={handleShare}
       aria-label={copied ? "Link copied" : "Share this page"}
-      className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/40 px-3.5 py-1.5 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-white/75 backdrop-blur-md transition-all hover:border-white/35 hover:bg-black/55 hover:text-white active:scale-95"
+      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white/75 backdrop-blur-md transition-all hover:border-white/35 hover:bg-black/55 hover:text-white active:scale-95"
     >
       {copied ? (
-        <>
-          <Check className="h-3.5 w-3.5 text-emerald-400" />
-          <span>Copied</span>
-        </>
+        <Check className="h-4 w-4 text-emerald-400" />
       ) : (
-        <>
-          <Share2 className="h-3.5 w-3.5" />
-          <span>Share</span>
-        </>
+        <Share2 className="h-4 w-4" />
       )}
     </button>
   );
