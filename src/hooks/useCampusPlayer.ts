@@ -1,5 +1,28 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { campusTracks, type CampusTrack } from "@/data/campus-playlists";
+import {
+  defaultWingPreference,
+  getTracksForWing,
+  wingOptions,
+  type CampusTrack,
+  type WingPreference,
+} from "@/data/campus-playlists";
+
+const STORAGE_WING_KEY = "jnu_campus_wing_preference";
+
+function readStoredWingPreference(): WingPreference {
+  if (typeof window === "undefined") return defaultWingPreference;
+
+  try {
+    const stored = localStorage.getItem(STORAGE_WING_KEY);
+    if (stored === "neutral" || stored === "left" || stored === "right") {
+      return stored;
+    }
+  } catch {
+    // ignore
+  }
+
+  return defaultWingPreference;
+}
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -8,11 +31,16 @@ function formatTime(seconds: number) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+function resolveAudioSrc(trackUrl: string) {
+  if (typeof window === "undefined") return trackUrl;
+  return new URL(trackUrl, window.location.origin).href;
+}
+
 function prefetchAudio(url: string) {
   if (typeof window === "undefined") return;
   const link = document.createElement("link");
   link.rel = "prefetch";
-  link.as = "fetch";
+  link.as = "audio";
   link.href = url;
   document.head.appendChild(link);
 }
@@ -44,17 +72,18 @@ function waitUntilPlayable(audio: HTMLAudioElement) {
 export function useCampusPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const preloadCacheRef = useRef<Map<string, HTMLAudioElement>>(new Map());
-  const tracksRef = useRef<CampusTrack[]>(campusTracks);
+  const tracksRef = useRef<CampusTrack[]>(getTracksForWing(readStoredWingPreference()));
   const trackIndexRef = useRef(0);
   const isPlayingRef = useRef(false);
 
+  const [wingPreference, setWingPreference] = useState<WingPreference>(readStoredWingPreference);
   const [trackIndex, setTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  const tracks = campusTracks;
+  const tracks = getTracksForWing(wingPreference);
 
   tracksRef.current = tracks;
   trackIndexRef.current = trackIndex;
@@ -82,7 +111,7 @@ export function useCampusPlayer() {
   );
 
   const loadTrack = useCallback(
-    async (index: number, autoplay = false) => {
+    async (index: number, autoplay = false, attempted = 0) => {
       const list = tracksRef.current;
       if (!list.length) return;
 
@@ -97,7 +126,8 @@ export function useCampusPlayer() {
       setElapsed(0);
       setIsLoading(true);
 
-      if (audio.src !== track.audio) {
+      const nextSrc = resolveAudioSrc(track.audio);
+      if (audio.src !== nextSrc) {
         audio.src = track.audio;
         audio.load();
       }
@@ -112,6 +142,10 @@ export function useCampusPlayer() {
         }
       } catch {
         setIsPlaying(false);
+        if (attempted < list.length - 1 && autoplay) {
+          void loadTrack(safeIndex + 1, true, attempted + 1);
+          return;
+        }
       } finally {
         setIsLoading(false);
       }
@@ -130,17 +164,6 @@ export function useCampusPlayer() {
   }, [loadTrack]);
 
   goNextRef.current = goNext;
-
-  const goPrev = useCallback(() => {
-    const audio = audioRef.current;
-    if (audio && audio.currentTime > 3) {
-      audio.currentTime = 0;
-      return;
-    }
-    const list = tracksRef.current;
-    if (!list.length) return;
-    void loadTrack(trackIndexRef.current - 1, isPlayingRef.current);
-  }, [loadTrack]);
 
   const seekTo = useCallback((ratio: number) => {
     const audio = audioRef.current;
@@ -176,6 +199,28 @@ export function useCampusPlayer() {
       setIsLoading(false);
     }
   }, [loadTrack]);
+
+  const selectWingPreference = useCallback(
+    (wing: WingPreference) => {
+      if (wing === wingPreference) return;
+
+      const nextTracks = getTracksForWing(wing);
+      if (!nextTracks.length) return;
+
+      setWingPreference(wing);
+      setTrackIndex(0);
+      setElapsed(0);
+      setDuration(0);
+      preloadCacheRef.current.clear();
+
+      try {
+        localStorage.setItem(STORAGE_WING_KEY, wing);
+      } catch {
+        // ignore
+      }
+    },
+    [wingPreference],
+  );
 
   useEffect(() => {
     const audio = new Audio();
@@ -215,12 +260,16 @@ export function useCampusPlayer() {
   }, []);
 
   useEffect(() => {
-    void loadTrack(0, false);
-  }, [loadTrack]);
+    tracksRef.current = getTracksForWing(wingPreference);
+    void loadTrack(0, isPlayingRef.current);
+  }, [wingPreference, loadTrack]);
 
   const progress = duration > 0 ? (elapsed / duration) * 100 : 0;
 
   return {
+    wingOptions,
+    wingPreference,
+    selectWingPreference,
     isPlaying,
     isLoading,
     elapsed,
@@ -229,7 +278,6 @@ export function useCampusPlayer() {
     formatTime,
     togglePlay,
     goNext,
-    goPrev,
     seekTo,
     hasTracks: tracks.length > 0,
   };

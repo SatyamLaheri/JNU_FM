@@ -6,29 +6,83 @@ export type CampusTrack = {
   cover: string;
 };
 
+export type WingPreference = "neutral" | "left" | "right";
+
+export type WingOption = {
+  id: WingPreference;
+  label: string;
+  shortLabel: string;
+};
+
 const POLITICAL_DIR = "/music/pollitical";
 
-/** Files in `public/music/pollitical/` — keep numbered order (1, 2, 3 …) */
-const POLITICAL_FILES = [
-  "1.Kanhaiya Kumar JNUSU president azadi aazadi - Manshes IIMC (128k).mp3",
-  "2.mp3",
-  "3.aisa.mp3",
-  "4.Abvp Theme Song National Conference (Official Video)Gyan Sheel EktaPundarikaksh DevKeerati - vagyakaar (128k).mp3",
-  "5.Gunj Raha Vidyarthi Parishad Ka Jaikara - Rapperiya Baalam (128k).mp3",
-  "6.Aaye Ho Meri Zindagi Mein - Female Version_spotdown.org.mp3",
-  "7.Bol Ke Lab Azad Hain - Full Video Manto Nawazuddin Siddiqui Sneha Khanwalkar Vidya S & Rashid K - The Pop Culture (128k).mp3",
-  "8.Hum Dekhenge - The Kashmir Files Darshan Kumaar & Pallavi Joshi Swapnil Bandodkar - Zee Music Company (128k).mp3",
-  "9.Theme Song - ABVP ABVP Rashtrabhakti 69th ABVP National Conference Delhi - ABVP (128k).mp3",
+/** Tracks in `public/music/pollitical/Left/` — 1.mp3, 2.mp3, … */
+const LEFT_TRACK_COUNT = 11;
+
+/** Tracks in `public/music/pollitical/Right/` — 1.mp3, 2.mp3, … */
+const RIGHT_TRACK_COUNT = 9;
+
+export const wingOptions: WingOption[] = [
+  { id: "neutral", label: "मिश्रित विचारधारा", shortLabel: "मिश्रित" },
+  { id: "left", label: "वामपंथी विचारधारा", shortLabel: "वाम" },
+  { id: "right", label: "दक्षिणपंथी विचारधारा", shortLabel: "दक्षिण" },
 ];
 
-function trackFromFile(file: string): CampusTrack {
-  return {
-    id: file,
-    title: "",
-    artist: "",
-    audio: `${POLITICAL_DIR}/${encodeURIComponent(file)}`,
-    cover: "",
-  };
+export function getWingOption(wing: WingPreference) {
+  return wingOptions.find((option) => option.id === wing) ?? wingOptions[0]!;
 }
 
-export const campusTracks: CampusTrack[] = POLITICAL_FILES.map(trackFromFile);
+export const defaultWingPreference: WingPreference = "neutral";
+
+function trackAudioPath(relativePath: string) {
+  return `${POLITICAL_DIR}/${relativePath
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/")}`;
+}
+
+function numberedFolderTracks(folder: "Left" | "Right", count: number): CampusTrack[] {
+  return Array.from({ length: count }, (_, index) => {
+    const file = `${index + 1}.mp3`;
+    const relativePath = `${folder}/${file}`;
+
+    return {
+      id: relativePath,
+      title: "",
+      artist: "",
+      audio: trackAudioPath(relativePath),
+      cover: "",
+    };
+  });
+}
+
+const leftTracks = numberedFolderTracks("Left", LEFT_TRACK_COUNT);
+const rightTracks = numberedFolderTracks("Right", RIGHT_TRACK_COUNT);
+
+function buildNeutralPlaylist(left: CampusTrack[], right: CampusTrack[]) {
+  const playlist: CampusTrack[] = [];
+  const maxLength = Math.max(left.length, right.length);
+
+  for (let index = 0; index < maxLength; index += 1) {
+    const leftTrack = left[index];
+    const rightTrack = right[index];
+
+    if (leftTrack) playlist.push(leftTrack);
+    if (rightTrack) playlist.push(rightTrack);
+  }
+
+  return playlist;
+}
+
+export function getTracksForWing(wing: WingPreference): CampusTrack[] {
+  switch (wing) {
+    case "left":
+      return leftTracks;
+    case "right":
+      return rightTracks;
+    default:
+      return buildNeutralPlaylist(leftTracks, rightTracks);
+  }
+}
+
+export const campusTracks = getTracksForWing(defaultWingPreference);
