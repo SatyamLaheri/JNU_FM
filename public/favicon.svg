@@ -1,5 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <rect width="64" height="64" rx="16" fill="#2C241E" />
-  <!-- Minimalist Indian Bus Silhouette -->
-  <path fill="#F5F2EB" d="M16 18c0-3.3 2.7-6 6-6h20c3.3 0 6 2.7 6 6v22c0 2.2-1.8 4-4 4v3a2 2 0 0 1-4 0v-3H24v3a2 2 0 0 1-4 0v-3c-2.2 0-4-1.8-4-4V18zm6-2c-1.1 0-2 .9-2 2v8h24v-8c0-1.1-.9-2-2-2H22zm-2 14v10c0 1.1.9 2 2 2h20c1.1 0 2-.9 2-2V30H20zm4 4a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zm16 0a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z" />
+  <text
+    x="32"
+    y="41"
+    text-anchor="middle"
+    fill="#F5F2EB"
+    font-family="Arial, Helvetica, sans-serif"
+    font-weight="700"
+    font-size="17"
+    letter-spacing="0.5"
+  >
+    JNU
+  </text>
 </svg>

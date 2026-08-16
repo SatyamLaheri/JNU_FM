@@ -2,11 +2,13 @@ import { CampusBackground } from "./CampusBackground";
 import { Clock } from "./Clock";
 import { CampusPlayer } from "./CampusPlayer";
 import { CampusTitle } from "./CampusTitle";
+import { InstagramHandle } from "./InstagramHandle";
 import { SharePill } from "./SharePill";
 
 const playerDockClass =
-  "fixed bottom-18 left-4 z-20 w-[calc(100%-2rem)] max-w-95 sm:bottom-16 sm:left-6";
-const shareDockClass = "fixed bottom-18 right-4 z-20 sm:bottom-16 sm:right-6";
+  "fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 z-20 w-[calc(100%-2rem)] max-w-95 sm:left-6";
+const shareDockClass =
+  "fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 z-20 sm:right-6";
 
 export function JnuCampus() {
   return (
@@ -26,6 +28,10 @@ export function JnuCampus() {
         <div className="pointer-events-none absolute left-1/2 top-[max(1rem,env(safe-area-inset-top))] hidden w-full max-w-xl -translate-x-1/2 sm:block sm:top-6">
           <CampusTitle />
         </div>
+
+        <div className="shrink-0">
+          <InstagramHandle />
+        </div>
       </header>
 
       <div className="relative z-10 mt-3 px-4 sm:hidden">
@@ -39,12 +45,6 @@ export function JnuCampus() {
       <div className={shareDockClass}>
         <SharePill />
       </div>
-
-      <footer className="fixed inset-x-0 bottom-0 z-20 flex items-center justify-center border-t border-white/10 bg-black/30 px-4 py-3 text-[0.68rem] font-medium text-white/45 backdrop-blur-sm sm:px-6 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <p className="text-center">
-          Crafted for the JNU campus community <span aria-label="love">❤️</span>
-        </p>
-      </footer>
     </main>
   );
 }
