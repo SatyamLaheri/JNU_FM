@@ -1,3 +1,4 @@
+import { CampusBackground } from "./CampusBackground";
 import { Clock } from "./Clock";
 import { CampusPlayer } from "./CampusPlayer";
 import { CampusTitle } from "./CampusTitle";
@@ -10,12 +11,7 @@ const shareDockClass = "fixed bottom-18 right-4 z-20 sm:bottom-16 sm:right-6";
 export function JnuCampus() {
   return (
     <main className="relative min-h-svh w-full overflow-hidden bg-black select-none">
-      <div
-        className="pointer-events-none fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/jnu-campus-bg.png')" }}
-        role="img"
-        aria-label="JNU campus hostel street at dusk with brick buildings, graffiti, bus, and dhaba"
-      />
+      <CampusBackground />
 
       <div
         className="pointer-events-none fixed inset-0 z-1 bg-linear-to-b from-black/40 via-transparent to-black/55"

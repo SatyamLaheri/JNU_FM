@@ -11,6 +11,7 @@ import type { ReactNode } from "react";
 import { playlist } from "../data/playlist";
 
 import appCss from "../styles.css?url";
+import { CampusBackground } from "../components/jnu-campus/CampusBackground";
 
 const SITE_URL = import.meta.env.VITE_SITE_URL || "http://localhost:3000";
 
@@ -97,11 +98,7 @@ const jsonLdData = {
 function NotFoundComponent() {
   return (
     <main className="relative min-h-svh w-full overflow-hidden bg-black select-none flex items-center justify-center p-4">
-      <div
-        className="pointer-events-none fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/jnu-campus-bg.png')" }}
-        aria-hidden="true"
-      />
+      <CampusBackground />
       <div
         className="pointer-events-none fixed inset-0 z-1 bg-linear-to-b from-black/45 via-black/20 to-black/65"
         aria-hidden="true"
