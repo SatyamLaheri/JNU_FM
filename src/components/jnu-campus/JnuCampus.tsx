@@ -6,7 +6,7 @@ import { InstagramHandle } from "./InstagramHandle";
 import { SharePill } from "./SharePill";
 
 const playerDockClass =
-  "fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 z-20 w-[calc(100%-2rem)] max-w-95 sm:left-6";
+  "fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-20 -translate-x-1/2 sm:left-6 sm:translate-x-0";
 const shareDockClass =
   "fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 z-20 sm:right-6";
 

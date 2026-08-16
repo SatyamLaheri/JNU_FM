@@ -1,27 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  campusPlaylists,
-  defaultPlaylistType,
-  getPlaylistByType,
-  type CampusTrack,
-  type PlaylistType,
-} from "@/data/campus-playlists";
-
-const STORAGE_PLAYLIST_KEY = "jnu_campus_playlist_type";
-
-function readStoredPlaylistType(): PlaylistType {
-  if (typeof window === "undefined") return defaultPlaylistType;
-  try {
-    const stored = localStorage.getItem(STORAGE_PLAYLIST_KEY);
-    if (stored === "political" || stored === "campus") {
-      const target = getPlaylistByType(stored);
-      if (!target.comingSoon && target.tracks.length > 0) return stored;
-    }
-  } catch {
-    // ignore
-  }
-  return defaultPlaylistType;
-}
+import { campusTracks, type CampusTrack } from "@/data/campus-playlists";
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -66,26 +44,21 @@ function waitUntilPlayable(audio: HTMLAudioElement) {
 export function useCampusPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const preloadCacheRef = useRef<Map<string, HTMLAudioElement>>(new Map());
-  const tracksRef = useRef<CampusTrack[]>([]);
+  const tracksRef = useRef<CampusTrack[]>(campusTracks);
   const trackIndexRef = useRef(0);
   const isPlayingRef = useRef(false);
-  const isShuffleRef = useRef(false);
 
-  const [playlistType, setPlaylistType] = useState<PlaylistType>(readStoredPlaylistType);
   const [trackIndex, setTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isShuffle, setIsShuffle] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  const playlist = getPlaylistByType(playlistType);
-  const tracks = playlist.tracks;
+  const tracks = campusTracks;
 
   tracksRef.current = tracks;
   trackIndexRef.current = trackIndex;
   isPlayingRef.current = isPlaying;
-  isShuffleRef.current = isShuffle;
 
   const warmCache = useCallback((track: CampusTrack) => {
     if (!track.audio || preloadCacheRef.current.has(track.audio)) return;
@@ -152,9 +125,7 @@ export function useCampusPlayer() {
     const list = tracksRef.current;
     if (!list.length) return;
     const current = trackIndexRef.current;
-    const nextIndex = isShuffleRef.current
-      ? Math.floor(Math.random() * list.length)
-      : (current + 1) % list.length;
+    const nextIndex = (current + 1) % list.length;
     void loadTrack(nextIndex, isPlayingRef.current);
   }, [loadTrack]);
 
@@ -170,6 +141,16 @@ export function useCampusPlayer() {
     if (!list.length) return;
     void loadTrack(trackIndexRef.current - 1, isPlayingRef.current);
   }, [loadTrack]);
+
+  const seekTo = useCallback((ratio: number) => {
+    const audio = audioRef.current;
+    if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
+
+    const clamped = Math.min(Math.max(ratio, 0), 1);
+    const nextTime = clamped * audio.duration;
+    audio.currentTime = nextTime;
+    setElapsed(nextTime);
+  }, []);
 
   const togglePlay = useCallback(async () => {
     const audio = audioRef.current;
@@ -195,30 +176,6 @@ export function useCampusPlayer() {
       setIsLoading(false);
     }
   }, [loadTrack]);
-
-  const selectPlaylistType = useCallback(
-    (type: PlaylistType) => {
-      const target = campusPlaylists.find((p) => p.id === type);
-      if (!target || target.comingSoon || target.tracks.length === 0) return;
-
-      setPlaylistType(type);
-      setTrackIndex(0);
-      setElapsed(0);
-      setDuration(0);
-      setIsPlaying(false);
-      preloadCacheRef.current.clear();
-
-      try {
-        localStorage.setItem(STORAGE_PLAYLIST_KEY, type);
-      } catch {
-        // ignore
-      }
-
-      tracksRef.current = target.tracks;
-      void loadTrack(0, false);
-    },
-    [loadTrack],
-  );
 
   useEffect(() => {
     const audio = new Audio();
@@ -259,14 +216,11 @@ export function useCampusPlayer() {
 
   useEffect(() => {
     void loadTrack(0, false);
-  }, [playlistType, loadTrack]);
+  }, [loadTrack]);
 
   const progress = duration > 0 ? (elapsed / duration) * 100 : 0;
 
   return {
-    playlistOptions: campusPlaylists,
-    playlistType,
-    selectPlaylistType,
     isPlaying,
     isLoading,
     elapsed,
@@ -276,6 +230,7 @@ export function useCampusPlayer() {
     togglePlay,
     goNext,
     goPrev,
+    seekTo,
     hasTracks: tracks.length > 0,
   };
 }

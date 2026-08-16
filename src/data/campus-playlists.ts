@@ -1,19 +1,9 @@
-export type PlaylistType = "political" | "campus";
-
 export type CampusTrack = {
   id: string;
   title: string;
   artist: string;
   audio: string;
   cover: string;
-};
-
-export type CampusPlaylist = {
-  id: PlaylistType;
-  label: string;
-  description: string;
-  tracks: CampusTrack[];
-  comingSoon?: boolean;
 };
 
 const POLITICAL_DIR = "/music/pollitical";
@@ -41,29 +31,4 @@ function trackFromFile(file: string): CampusTrack {
   };
 }
 
-export const politicalPlaylist: CampusTrack[] = POLITICAL_FILES.map(trackFromFile);
-
-export const campusPlaylist: CampusTrack[] = [];
-
-export const campusPlaylists: CampusPlaylist[] = [
-  {
-    id: "political",
-    label: "Political",
-    description: "Kranti geet, student movement anthems, and campus protest songs",
-    tracks: politicalPlaylist,
-  },
-  {
-    id: "campus",
-    label: "Campus",
-    description: "Hostel nights, dhaba hour, and everyday JNU melodies",
-    tracks: campusPlaylist,
-    comingSoon: true,
-  },
-];
-
-export function getPlaylistByType(type: PlaylistType): CampusPlaylist {
-  const playlist = campusPlaylists.find((p) => p.id === type);
-  return playlist ?? campusPlaylists[0]!;
-}
-
-export const defaultPlaylistType: PlaylistType = "political";
+export const campusTracks: CampusTrack[] = POLITICAL_FILES.map(trackFromFile);
