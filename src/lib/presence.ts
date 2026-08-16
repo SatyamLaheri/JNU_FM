@@ -1,46 +1,95 @@
-import { createServerFn } from "@tanstack/react-start";
+/**
+ * Client-side listener presence.
+ * Server functions were removed to avoid TanStack Start CSRF middleware
+ * issues on Vercel serverless. Count reflects active tabs on this device.
+ */
 
+const CLIENT_ID_KEY = "jnu_campus_listener_id";
+const TAB_HEARTBEAT_KEY = "jnu_campus_tab_heartbeat";
 const PRESENCE_TTL_MS = 45_000;
 
-type PresenceStore = Map<string, number>;
+function getClientId() {
+  if (typeof window === "undefined") return "server";
+  const existing = localStorage.getItem(CLIENT_ID_KEY);
+  if (existing) return existing;
 
-function getPresenceStore(): PresenceStore {
-  const globalStore = globalThis as typeof globalThis & {
-    __jnuCampusPresence?: PresenceStore;
-  };
-
-  if (!globalStore.__jnuCampusPresence) {
-    globalStore.__jnuCampusPresence = new Map();
-  }
-
-  return globalStore.__jnuCampusPresence;
+  const clientId = crypto.randomUUID();
+  localStorage.setItem(CLIENT_ID_KEY, clientId);
+  return clientId;
 }
 
-function prunePresenceStore(store: PresenceStore) {
-  const now = Date.now();
+function readActiveTabCount() {
+  if (typeof window === "undefined") return 1;
 
-  for (const [clientId, lastSeen] of store) {
+  const now = Date.now();
+  const raw = localStorage.getItem(TAB_HEARTBEAT_KEY);
+  const heartbeats = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+
+  for (const [tabId, lastSeen] of Object.entries(heartbeats)) {
     if (now - lastSeen > PRESENCE_TTL_MS) {
-      store.delete(clientId);
+      delete heartbeats[tabId];
     }
   }
+
+  return Math.max(1, Object.keys(heartbeats).length);
 }
 
-export const pingPresence = createServerFn({ method: "POST" })
-  .validator((data: { clientId: string }) => data)
-  .handler(async ({ data }) => {
-    const store = getPresenceStore();
-    store.set(data.clientId, Date.now());
-    prunePresenceStore(store);
+function writeHeartbeat(tabId: string) {
+  const now = Date.now();
+  const raw = localStorage.getItem(TAB_HEARTBEAT_KEY);
+  const heartbeats = raw ? (JSON.parse(raw) as Record<string, number>) : {};
 
-    return { onlineCount: Math.max(1, store.size) };
+  heartbeats[tabId] = now;
+
+  for (const [id, lastSeen] of Object.entries(heartbeats)) {
+    if (now - lastSeen > PRESENCE_TTL_MS) {
+      delete heartbeats[id];
+    }
+  }
+
+  localStorage.setItem(TAB_HEARTBEAT_KEY, JSON.stringify(heartbeats));
+}
+
+function removeHeartbeat(tabId: string) {
+  const raw = localStorage.getItem(TAB_HEARTBEAT_KEY);
+  if (!raw) return;
+
+  const heartbeats = JSON.parse(raw) as Record<string, number>;
+  delete heartbeats[tabId];
+  localStorage.setItem(TAB_HEARTBEAT_KEY, JSON.stringify(heartbeats));
+}
+
+export function getLocalListenerCount() {
+  getClientId();
+  return readActiveTabCount();
+}
+
+export function startLocalPresence(tabId: string, onUpdate: (count: number) => void) {
+  const refresh = () => {
+    writeHeartbeat(tabId);
+    onUpdate(readActiveTabCount());
+  };
+
+  refresh();
+  const interval = window.setInterval(refresh, 20_000);
+
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key === TAB_HEARTBEAT_KEY) {
+      onUpdate(readActiveTabCount());
+    }
+  };
+
+  window.addEventListener("storage", handleStorage);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      refresh();
+    }
   });
 
-export const getPresenceCount = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const store = getPresenceStore();
-    prunePresenceStore(store);
-
-    return { onlineCount: Math.max(1, store.size) };
-  },
-);
+  return () => {
+    window.clearInterval(interval);
+    window.removeEventListener("storage", handleStorage);
+    removeHeartbeat(tabId);
+    onUpdate(readActiveTabCount());
+  };
+}
