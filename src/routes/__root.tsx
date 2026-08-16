@@ -8,12 +8,14 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { playlist } from "../data/playlist";
+import { getTracksForWing } from "../data/campus-playlists";
 
 import appCss from "../styles.css?url";
 import { CampusBackground } from "../components/jnu-campus/CampusBackground";
 
-const SITE_URL = import.meta.env.VITE_SITE_URL || "http://localhost:3000";
+const SITE_URL = import.meta.env.VITE_SITE_URL || "https://jnufm.vercel.app";
+
+const neutralTrackCount = getTracksForWing("neutral").length;
 
 const jsonLdData = {
   "@context": "https://schema.org",
@@ -25,7 +27,7 @@ const jsonLdData = {
       name: "JNU Campus",
       alternateName: "जे.एन.यू.",
       description:
-        "JNU Campus is an ambient campus radio experience for the JNU community — nostalgic Hindi music against a painterly illustration of hostel nights.",
+        "JNU Campus is an ambient campus radio experience for the JNU community — political and campus songs against a painterly illustration of hostel nights.",
       publisher: {
         "@id": `${SITE_URL}/#organization`,
       },
@@ -36,7 +38,8 @@ const jsonLdData = {
       url: `${SITE_URL}/`,
       name: "JNU Campus — Ambient Campus Radio",
       isPartOf: { "@id": `${SITE_URL}/#website` },
-      about: "An ambient now-playing experience for the JNU campus community with nostalgic Hindi music.",
+      about:
+        "An ambient now-playing experience for the JNU campus community with political and campus radio playlists.",
     },
     {
       "@type": "WebApplication",
@@ -57,40 +60,10 @@ const jsonLdData = {
     {
       "@type": "MusicPlaylist",
       "@id": `${SITE_URL}/#playlist`,
-      name: "Nostalgic Hindi Playlist — JNU Campus",
-      description: "Campus radio playlist: classic old Hindi songs, 90s Bollywood hits, and nostalgic hostel-night melodies.",
-      numTracks: playlist.length,
-      mainEntity: {
-        "@type": "ItemList",
-        itemListElement: playlist.map((track, index) => ({
-          "@type": "ListItem",
-          position: index + 1,
-          item: {
-            "@type": "MusicRecording",
-            name: track.title,
-            byArtist: track.artist,
-            inAlbum: track.album,
-            datePublished: track.year ? String(track.year) : undefined,
-            url: `${SITE_URL}/?song=${track.id}`,
-            image: `${SITE_URL}${track.cover}`,
-          },
-        })),
-      },
-      track: playlist.map((track, index) => ({
-        "@type": "MusicRecording",
-        name: track.title,
-        position: index + 1,
-        url: `${SITE_URL}${track.audio}`,
-        image: `${SITE_URL}${track.cover}`,
-        byArtist: {
-          "@type": "MusicGroup",
-          name: track.artist,
-        },
-        inAlbum: track.album ? {
-          "@type": "MusicAlbum",
-          name: track.album,
-        } : undefined,
-      })),
+      name: "JNU Campus Political Radio",
+      description:
+        "Campus political radio with left, right, and mixed playlists for the JNU community.",
+      numTracks: neutralTrackCount,
     },
   ],
 };

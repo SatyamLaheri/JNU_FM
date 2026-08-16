@@ -14,7 +14,9 @@ export default defineConfig({
         disableCsrfMiddlewareWarning: true,
       },
     }),
-    nitro(),
+    nitro({
+      preset: process.env.VERCEL ? "vercel" : undefined,
+    }),
     viteReact(),
   ],
 });
