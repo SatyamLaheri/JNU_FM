@@ -1,0 +1,16 @@
+{
+  "name": "JNU Campus",
+  "short_name": "JNU Campus",
+  "description": "An ambient campus radio experience for the JNU community — hostel nights, dhaba hour, and campus after dark.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a0a0a",
+  "theme_color": "#8B0000",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

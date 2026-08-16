@@ -1,0 +1,10 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/:path((?!api|_build|assets|Songs|covers|favicon|manifest|robots|sitemap|og-image|bus-stop-bg).+)",
+      "destination": "/"
+    }
+  ]
+}
